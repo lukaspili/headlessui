@@ -88,6 +88,7 @@ enum ComboboxState {
 enum ValueMode {
   Single,
   Multi,
+  AutoComplete,
 }
 
 enum ActivationTrigger {
@@ -627,11 +628,12 @@ type ComboboxRenderPropArg<TValue, TActive = TValue> = {
 export type ComboboxProps<
   TValue,
   TMultiple extends boolean | undefined,
+  TAutoComplete extends boolean | undefined,
   TTag extends ElementType = typeof DEFAULT_COMBOBOX_TAG,
 > = Props<
   TTag,
   ComboboxRenderPropArg<NoInfer<TValue>>,
-  'value' | 'defaultValue' | 'multiple' | 'onChange' | 'by',
+  'value' | 'defaultValue' | 'multiple' | 'autoComplete' | 'onChange' | 'by',
   {
     value?: TMultiple extends true ? EnsureArray<TValue> : TValue
     defaultValue?: TMultiple extends true ? EnsureArray<NoInfer<TValue>> : NoInfer<TValue>
@@ -647,6 +649,7 @@ export type ComboboxProps<
     nullable?: boolean
 
     multiple?: TMultiple
+    autoComplete?: TAutoComplete
     disabled?: boolean
     form?: string
     name?: string
@@ -665,7 +668,7 @@ export type ComboboxProps<
 >
 
 function ComboboxFn<TValue, TTag extends ElementType = typeof DEFAULT_COMBOBOX_TAG>(
-  props: ComboboxProps<TValue, boolean | undefined, TTag>,
+  props: ComboboxProps<TValue, boolean | undefined, boolean | undefined, TTag>,
   ref: Ref<HTMLElement>
 ) {
   let providedDisabled = useDisabled()
@@ -735,6 +738,7 @@ function ComboboxFn<TValue, TTag extends ElementType = typeof DEFAULT_COMBOBOX_T
         [ValueMode.Multi]: () =>
           (value as EnsureArray<TValue>).some((option) => compare(option, other)),
         [ValueMode.Single]: () => compare(value as TValue, other),
+        [ValueMode.AutoComplete]: () => false,
       }),
     [value]
   )
@@ -902,6 +906,9 @@ function ComboboxFn<TValue, TTag extends ElementType = typeof DEFAULT_COMBOBOX_T
         }
 
         return theirOnChange?.(copy as TValue[])
+      },
+      [ValueMode.AutoComplete]() {
+        return theirOnChange?.(value as TValue)
       },
     })
   })
@@ -2059,9 +2066,10 @@ export interface _internal_ComponentCombobox extends HasDisplayName {
   <
     TValue,
     TMultiple extends boolean | undefined = false,
+    TAutoComplete extends boolean | undefined = false,
     TTag extends ElementType = typeof DEFAULT_COMBOBOX_TAG,
   >(
-    props: ComboboxProps<TValue, TMultiple, TTag> & RefProp<typeof ComboboxFn>
+    props: ComboboxProps<TValue, TMultiple, TAutoComplete, TTag> & RefProp<typeof ComboboxFn>
   ): React.JSX.Element
 }
 
